@@ -883,7 +883,8 @@ public class NLR_Contig {
 									mutantLinesWithSNPs.add(mutantLine);
 									
 									snpreport = snpreport + ";SNP("+key.intValue()+ "," + snps.get(mutantLine).get(key).getReferenceAlleleFrequency() +
-											"," + snps.get(mutantLine).get(key).getRefBase() + "->" + snps.get(mutantLine).get(key).getLargestAlternativeAllele()+aa_report+")";
+							//				"," + snps.get(mutantLine).get(key).getRefBase() + "->" + snps.get(mutantLine).get(key).getLargestAlternativeAllele()+aa_report+")";
+											"," + snps.get(mutantLine).get(key).getRefBase() + "->" + snps.get(mutantLine).get(key).getLargestAlternativeAllele()+")";
 								}
 								
 							}
@@ -904,7 +905,7 @@ public class NLR_Contig {
 				this.report = this.report + linereports+"\n";
 				
 				//final result
-				if( mutantLinesWithSNPs.size() >= minNumberOfTotalMutants){
+				if( mutantLinesWithSNPs.size() + mutantLinesWithDeletions.size() >= minNumberOfTotalMutants){
 					
 					return true;
 				}

@@ -440,11 +440,11 @@ public class MutantHunter {
 		
 		BufferedWriter out = new BufferedWriter(new FileWriter(outputFile));
 
-		System.err.println("DEBUG: Number of Mutant Lines: "+this.mutantLines.size());
+	//	System.err.println("DEBUG: Number of Mutant Lines: "+this.mutantLines.size());
 		
 		
-		System.err.println("DEBUG: finding candidates in " + this.getNumberOfContigs() + " contigs");
-		System.err.println("DEBUG: writing candidates to " + outputFile.getAbsolutePath());
+	//	System.err.println("DEBUG: finding candidates in " + this.getNumberOfContigs() + " contigs");
+	//	System.err.println("DEBUG: writing candidates to " + outputFile.getAbsolutePath());
 		Vector<String> contigNames = new Vector<String>();
 		
 		
@@ -667,6 +667,8 @@ public class MutantHunter {
 		cli.parseOptions(args);
 		
 		
+		
+		
 		try{
 			
 			if( !cli.hasOption("w") || !cli.hasOption("m") || !cli.hasOption("b") || !cli.hasOption("o")){
@@ -754,7 +756,7 @@ public class MutantHunter {
 			e.printStackTrace();
 			
 			String s = "-w <wt.xml>\t\t\tThe XML file generated with Pileup2XML.jar made from wildtyp\n"+
-					   "-m <mt1.xml [mtn.xml]*\t\t\t The XML files generated with Pileup2XML.jar made from mutants\n"+
+					   "-m <mt1.xml [mtn.xml]*\t\tThe XML files generated with Pileup2XML.jar made from mutants\n"+
 					   "-b <blast.xml>\t\t\tThe blast file of contigs vs. baits. Use NCBI blast+ and -outfmt 5\n"+
 					   "-o <output.txt>\t\t\tOutput file with andidates\n"+
 					   "-n <int>\t\t\tMinimum number of mutants to report a contig. Default is 2\n"+

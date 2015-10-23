@@ -91,7 +91,7 @@ public class NLRParser {
 								"-t <int>\t\t\tnumber of parallel threads. Default 1\n"+
 								"-p <float>\t\t\tpvalue for mast call. Default 1E-5\n"+
 								"-n <int>\t\t\tnumber of sequences processed per thread. Default 1000\n"+
-								"-v\t\t\t verbous. Tabular output to stdout";
+								"-v\t\t\t\tverbous. Tabular output to stdout";
 			
 			
 			
@@ -99,9 +99,9 @@ public class NLRParser {
 			
 			
 			cli.parseOptions(args);
-			//if(!cli.hasOption("i") || !cli.hasOption("x") || !cli.hasOption("y")){
-			//	throw new CLIParseException("Missing options. -i, -x and -y are mandatory");
-			//}
+			if(!cli.hasOption("i") ){
+				throw new CLIParseException("Missing options. -i,-x and -y is mandatory");
+			}
 			
 			File inputFile = new File( cli.getArg("i") );
 			

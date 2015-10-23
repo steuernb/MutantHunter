@@ -25,10 +25,10 @@ public class Pileup2XML {
 		CLI cli = new CLI();
 		cli.parseOptions(args);
 		
-		String helpString =		"-i <inputPileup>\t\t\tInput file in mpileup format\n"+
-								"-m <nlrparser.xml>\t\t\tThe annotation file of the assembly. Run NLR-Parser with option -c\n"+
+		String helpString =		"-i <inputPileup>\t\tInput file in mpileup format\n"+
+								"-m <nlrparser.xml>\t\tThe annotation file of the assembly. Run NLR-Parser with option -c\n"+
 								"-o <output.xml>\t\t\tThe output file in xml format\n"+
-								"-w\t\t\tThis pileup belongs to the wildtype\n"+
+								"-w\t\t\t\tThis pileup belongs to the wildtype\n"+
 								"-c <int>\t\t\tminimum coverage to report a SNP\n";
 								
 
