@@ -30,16 +30,17 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+
 import nlr_parser.MastMotifHitList;
 
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import supportClasses.BioSequence;
+import supportClasses.CLI;
+import supportClasses.CLIParseException;
 import supportClasses.FastaReader;
 import supportClasses.MPileupLine;
 import supportClasses.blast.BlastHSP;
@@ -662,37 +663,122 @@ public class MutantHunter {
 	
 	public static void main(String[] args){
 		
-		Options options = new Options();
-		options.addOption( OptionBuilder.withLongOpt( "wildtypeXML")
-										.withDescription("The xml file generated with pileup2xml made from the wildtype")
-										.isRequired()
-										.hasArg()
-										.withArgName("file.mpileup")
-										.create('w'));
-		
-		options.addOption( OptionBuilder.withLongOpt( "wildtypeXML")
-										.withDescription("The xml files generated with pileup2xml made from the mutants")
-										.isRequired()
-										.hasArgs()
-										.create('m'));
-		options.addOption( OptionBuilder.withLongOpt( "blastFile")
-										.withDescription("The blast file vs. the bait file. Use NCBI blast+ and outfmt 5")
-										.isRequired()
-										.hasArg()
-										.create('b'));
-		options.addOption( OptionBuilder.withLongOpt( "output")
-										.withDescription("Output file with candidates")
-										.isRequired()
-										.hasArg()
-										.create('o'));
+		CLI cli = new CLI();
+		cli.parseOptions(args);
 		
 		
+		try{
+			
+			if( !cli.hasOption("w") || !cli.hasOption("m") || !cli.hasOption("b") || !cli.hasOption("o")){
+				throw new CLIParseException("Missing required option: -w, -m, -b and -o are required.");
+			}
+			
+			File wtFile = new File(cli.getArg("w"));
+			Vector<String> mutants = cli.getArgs("m");
+			File blastFile = new File(cli.getArg("b"));
+			File outputFile = new File(cli.getArg("o"));
+			
+			
+			MutantHunter hunter = new MutantHunter(wtFile);
+			for(Enumeration<String> myenum = mutants.elements(); myenum.hasMoreElements();){
+				String mutant = myenum.nextElement();
+				hunter.addXML(new File(mutant),false);
+			}
+			
+			hunter.addRegions(blastFile, 100, false);
+			
+			
+			
+			int minMutants = 2;
+			
+			if( cli.hasOption("n")){
+				try{
+					minMutants = Integer.parseInt(cli.getArg("n"));
+				}catch(NumberFormatException e){
+					throw new CLIParseException("Argument for -n has to be an int");
+				}
+			}
+			
+			
+			int minWtCov = 10;
+			int minCoverageToConsiderSNP = 10;
+			
+			if( cli.hasOption("c")){
+				try{
+					minWtCov = Integer.parseInt(cli.getArg("c"));
+					minCoverageToConsiderSNP = Integer.parseInt(cli.getArg("c"));
+				}catch(NumberFormatException e){
+					throw new CLIParseException("Argument for -c has to be an int");
+				}
+			}
+			
+					
+			double maxRefAlleleFrequency = 0.1;
+			if( cli.hasOption("a")){
+				try{
+					maxRefAlleleFrequency = Double.parseDouble(cli.getArg("a"));
+				}catch(NumberFormatException e){
+					throw new CLIParseException("Argument for -a has to be an float");
+				}
+			}
+			
+			int minNumberOfZeroCoveragePositions = 50;
+			if( cli.hasOption("z")){
+				try{
+					minNumberOfZeroCoveragePositions = Integer.parseInt(cli.getArg("z"));
+				}catch(NumberFormatException e){
+					throw new CLIParseException("Argument for -z has to be an int");
+				}
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			hunter.findCandidates(outputFile, minWtCov, maxRefAlleleFrequency, minCoverageToConsiderSNP, minNumberOfZeroCoveragePositions, minMutants, false);
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		}catch (CLIParseException e){
+			e.printStackTrace();
+			
+			String s = "-w <wt.xml>\t\t\tThe XML file generated with Pileup2XML.jar made from wildtyp\n"+
+					   "-m <mt1.xml [mtn.xml]*\t\t\t The XML files generated with Pileup2XML.jar made from mutants\n"+
+					   "-b <blast.xml>\t\t\tThe blast file of contigs vs. baits. Use NCBI blast+ and -outfmt 5\n"+
+					   "-o <output.txt>\t\t\tOutput file with andidates\n"+
+					   "-n <int>\t\t\tMinimum number of mutants to report a contig. Default is 2\n"+
+					   "-c <int>\t\t\tMininum coverage for mappings to be regarded. Default is 10\n"+
+					   "-a <float>\t\t\tMaximum reference allele frequency to consider a SNP. Default is 0.1\n"+
+					   "-z <int>\t\t\tNumber of coherent positions with zero coverage to call a deletion mutant. Default is 50\n";
+			
+			System.err.println(s);
+			
+		}
+		catch (ParserConfigurationException e){
+			e.printStackTrace();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		catch (SAXException e){
+			e.printStackTrace();
+		}
+		
+		
+		
+	
 	}
-	
-	
-	
-	
-	
 	
 	
 	

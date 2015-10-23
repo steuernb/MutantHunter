@@ -16,16 +16,11 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.xml.sax.SAXException;
 
 import supportClasses.BioSequence;
+import supportClasses.CLI;
+import supportClasses.CLIParseException;
 import supportClasses.FastaReader;
 import supportClasses.FastqReader;
 
@@ -80,240 +75,98 @@ public class NLRParser {
 	
 	
 	
-	
-	
-	
 	public static void main(String[] args){
 		
-		
-		
-		Options options = new Options();
-		options.addOption( OptionBuilder.withLongOpt( "input")
-										.withDescription("input file in fasta, fastq or xml format. If this is a sequence file, parameters y and x are required as well. If this an xml file, it is assumed that this is a backup from NLR-Parser.")
-										.hasArg()
-										.create('i'));
-		options.addOption( OptionBuilder.withLongOpt( "output")
-										.withDescription("output File")
-										.hasArg()
-										.withArgName("output.tsv")
-										.create('o'));
-		options.addOption(OptionBuilder.withLongOpt("writeGFF")
-										.withDescription("Output general feature format (GFF)")
-										.hasArg()
-										.withArgName("output.gff")
-										.create('g'));
-		options.addOption(OptionBuilder.withLongOpt("backup")
-									   .withDescription("A backup xml file")
-									   .hasArg()
-									   .withArgName("backup.xml")
-									   .create('c'));
-		options.addOption(OptionBuilder.withLongOpt("bed")
-				   						.withDescription("Output in BED format")
-				   						.hasArg()
-				   						.withArgName("output.bed")
-				   						.create('b'));
-				options.addOption(OptionBuilder.withLongOpt("pValue")
-									   .withDescription("p-value threshold for each individual motif.")
-									   .hasArg()
-									   .withArgName("pvalue")
-									   .create('p'));
-		options.addOption(OptionBuilder.withLongOpt("mast")
-										.withDescription("The path to the mast program")
-										.hasArg()
-										.create('y'));
-		options.addOption(OptionBuilder.withLongOpt("meme")
-										.withDescription("The path to the meme.xml file containing the NLR motifs")
-										.hasArg()
-										.create('x'));
-		options.addOption(OptionBuilder.withLongOpt("numThreads")
-										.withDescription("Number of Threads")
-										.hasArg()
-										.create('t'));
-		options.addOption(OptionBuilder.withLongOpt("numSequencesPerMastCall")
-										.withDescription("Number of sequences that are submitted to mast analysis at the same time. Since the pvalue depends on the length of input data set you might miss hits if you sequence n is too large. Default 1000")
-										.hasArg()
-										.create('n'));
-		options.addOption(OptionBuilder.withLongOpt("verbous")
-										.withDescription("verbous. Print tsv output format to standard.out")
-										.create('v'));
-		options.addOption(OptionBuilder.withLongOpt("help")
-				   						.withDescription("display this help")
-				   						.create('h'));
-		
-		
-		CommandLineParser parser = new PosixParser();
-		//i,o,g,b,p,y,x,t,n,h
-		
-		try {
+		CLI cli = new CLI();
 			
-			CommandLine line = parser.parse( options, args );
 			
-			if( line.hasOption('h')){
-				HelpFormatter formatter = new HelpFormatter();
-		        formatter.printHelp( "SequenceTools", options );
+			
+		String helpString =		"-i <inputFasta>\t\t\tInput file in fasta format\n"+
+								"-x <meme.xml>\t\t\tLocation of the meme.xml\n"+
+								"-y <mast>\t\t\tLocation of the mast program\n"+
+								"-o <output.txt>\t\t\toutput file in tabular format\n"+
+								"-g <output.gff>\t\t\toutput file in gff format\n"+
+								"-b <output.bed>\t\t\toutput file in bed format\n"+
+								"-c <output.xml>\t\t\toutput file in xml format\n"+
+								"-t <int>\t\t\tnumber of parallel threads. Default 1\n"+
+								"-p <float>\t\t\tpvalue for mast call. Default 1E-5\n"+
+								"-n <int>\t\t\tnumber of sequences processed per thread. Default 1000\n"+
+								"-v\t\t\t verbous. Tabular output to stdout";
+			
+			
+			
+		try{
+			
+			
+			cli.parseOptions(args);
+			//if(!cli.hasOption("i") || !cli.hasOption("x") || !cli.hasOption("y")){
+			//	throw new CLIParseException("Missing options. -i, -x and -y are mandatory");
+			//}
+			
+			File inputFile = new File( cli.getArg("i") );
+			
+			NLRParser nlrParser;
+			
+			
+			boolean isXML = false;
+			BufferedReader in = new BufferedReader(new FileReader(inputFile));
+			String inputLine = in.readLine();
+			while( inputLine!= null && inputLine.trim().length()==0){
+				inputLine =in.readLine();
+			}
+			in.close();
+			if( inputLine.toLowerCase().contains("<?xml") ){
+				isXML = true;
+			}
+			if(isXML){
+				nlrParser = new NLRParser(inputFile);
 			}else{
-				if(!line.hasOption('i')){
-					throw new ParseException ("no input file found. Provide input file with parameter -i");
+				if(!cli.hasOption("y") || !cli.hasOption("x")){
+					throw new CLIParseException("Input File is not XML format. If this is a sequence file you have to provide arguments -x and -y");
 				}
-				File inputFile = new File(line.getOptionValue('i'));
-				
-				
-				NLRParser nlrParser;
-				
-				
-				boolean isXML = false;
-				BufferedReader in = new BufferedReader(new FileReader(inputFile));
-				String inputLine = in.readLine();
-				while( inputLine!= null && inputLine.trim().length()==0){
-					inputLine =in.readLine();
+				File mastExe = new File(cli.getArg("y"));
+				File memeXML = new File(cli.getArg("x"));
+				if(!memeXML.exists()){
+					throw new CLIParseException("meme.xml not found");
 				}
-				in.close();
-				if( inputLine.toLowerCase().contains("<?xml") ){
-					isXML = true;
+				if(!mastExe.exists()){
+					throw new CLIParseException("MAST not found");
 				}
 				
-				
-				
-				
-				
-				if(isXML){
-					nlrParser = new NLRParser(inputFile);
-				}else{
-					if(!line.hasOption('y') || !line.hasOption('x')){
-						throw new ParseException("Input File is not XML format. If this is a sequence file you have to provide arguments -x and -y");
+				int numThreads = 1;
+				if( cli.hasOption("t")){
+					try{
+						numThreads = Integer.parseInt(cli.getArg("t"));
+					}catch(NumberFormatException e){
+						System.err.println("WARNING: Wrong parameter for -t. Integer was expected. Program executed with -t 1.");
 					}
-					File mastExe = new File(line.getOptionValue('y'));
-					File memeXML = new File(line.getOptionValue('x'));
-					if(!memeXML.exists()){
-						throw new ParseException("meme.xml not found");
-					}
-					if(!mastExe.exists()){
-						throw new ParseException("MAST not found");
+				}
+				
+				double pvalue = 1E-5;
+				if( cli.hasOption("p")){
+					try {
+						pvalue = Double.parseDouble(cli.getArg("p"));
+					} catch (Exception e) {
+						System.err.println("WARNING: Wrong parameter for -p. Float was expected. Program executed with -p 1e-5.");
 					}
 					
-					int numThreads = 1;
-					if( line.hasOption('t')){
-						try{
-							numThreads = Integer.parseInt(line.getOptionValue('t'));
-						}catch(NumberFormatException e){
-							System.err.println("WARNING: Wrong parameter for -t. Integer was expected. Program executed with -t 1.");
-						}
+				}
+				
+				
+				
+				int numberOfSeqeuncesPerMastCall = 1000;
+				if(cli.hasOption("n")){
+					try{
+						numberOfSeqeuncesPerMastCall = Integer.parseInt(cli.getArg("n"));
+					}catch ( NumberFormatException e){
+						System.err.println("WARNING: Wrong parameter for -n. Integer was expected. Program executed with -n 1000.");
 					}
-					
-					double pvalue = 1E-5;
-					if( line.hasOption('p')){
-						try {
-							pvalue = Double.parseDouble(line.getOptionValue('p'));
-						} catch (Exception e) {
-							System.err.println("WARNING: Wrong parameter for -p. Float was expected. Program executed with -p 1e-5.");
-						}
-						
-					}
-					
-					
-					
-					int numberOfSeqeuncesPerMastCall = 1000;
-					if(line.hasOption('n')){
-						try{
-							numberOfSeqeuncesPerMastCall = Integer.parseInt(line.getOptionValue('n'));
-						}catch ( NumberFormatException e){
-							System.err.println("WARNING: Wrong parameter for -n. Integer was expected. Program executed with -n 1000.");
-						}
-					}
-					
-					
-					nlrParser = new NLRParser(inputFile, mastExe, memeXML, numThreads, numberOfSeqeuncesPerMastCall, pvalue);
-					
-					nlrParser.addSequence(inputFile);
-					
-					
 				}
 				
 				
+				nlrParser = new NLRParser(inputFile, mastExe, memeXML, numThreads, numberOfSeqeuncesPerMastCall, pvalue);
 				
-				
-				if( line.hasOption('o')){
-					
-					File outputFile = new File(line.getOptionValue('o'));
-					if( outputFile.exists()){
-						outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
-						outputFile = new File(line.getOptionValue('o'));
-						
-						
-						File intermediateFile = new File(outputFile.getAbsolutePath());
-						while(intermediateFile.exists()){
-							intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
-						}
-						if(outputFile.exists()){
-							outputFile.renameTo(intermediateFile);
-							System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
-						}
-						
-						outputFile = new File(line.getOptionValue('o'));
-					}
-					nlrParser.writeTSV(outputFile);
-				}
-				
-				if(line.hasOption('g')){
-					
-					File outputFile = new File(line.getOptionValue('g'));
-					if( outputFile.exists()){
-						outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
-						outputFile = new File(line.getOptionValue('g'));
-						
-						
-						File intermediateFile = new File(outputFile.getAbsolutePath());
-						while(intermediateFile.exists()){
-							intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
-						}
-						if(outputFile.exists()){
-							outputFile.renameTo(intermediateFile);
-							System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
-						}
-						
-						outputFile = new File(line.getOptionValue('g'));
-					
-				}
-					nlrParser.writeGFF(outputFile);
-				}
-				
-				if( line.hasOption('v')){
-					nlrParser.writeStdOut();
-				}
-				
-				if(line.hasOption('c')){
-					nlrParser.writeBackup(new File(line.getOptionValue('c')));
-				}
-				
-				
-				
-				
-				
-				if(line.hasOption('b')){
-					
-					File outputFile = new File(line.getOptionValue('b'));
-					if( outputFile.exists()){
-						outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
-						outputFile = new File(line.getOptionValue('b'));
-						
-						
-						File intermediateFile = new File(outputFile.getAbsolutePath());
-						while(intermediateFile.exists()){
-							intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
-						}
-						if(outputFile.exists()){
-							outputFile.renameTo(intermediateFile);
-							System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
-						}
-						
-						outputFile = new File(line.getOptionValue('b'));
-					
-				}
-					nlrParser.writeBED(outputFile);
-				}
-				
-				
-				
+				nlrParser.addSequence(inputFile);
 				
 				
 			}
@@ -321,57 +174,129 @@ public class NLRParser {
 			
 			
 			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+			if( cli.hasOption("o")){
+				
+				File outputFile = new File(cli.getArg("o"));
+				if( outputFile.exists()){
+					outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
+					outputFile = new File(cli.getArg("o"));
 					
+					
+					File intermediateFile = new File(outputFile.getAbsolutePath());
+					while(intermediateFile.exists()){
+						intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
+					}
+					if(outputFile.exists()){
+						outputFile.renameTo(intermediateFile);
+						System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
+					}
+					
+					outputFile = new File(cli.getArg("o"));
+				}
+				nlrParser.writeTSV(outputFile);
+			}
+			
+			if(cli.hasOption("g")){
+				
+				File outputFile = new File(cli.getArg("g"));
+				if( outputFile.exists()){
+					outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
+					outputFile = new File(cli.getArg("g"));
+					
+					
+					File intermediateFile = new File(outputFile.getAbsolutePath());
+					while(intermediateFile.exists()){
+						intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
+					}
+					if(outputFile.exists()){
+						outputFile.renameTo(intermediateFile);
+						System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
+					}
+					
+					outputFile = new File(cli.getArg("g"));
+				
+			}
+				nlrParser.writeGFF(outputFile);
+			}
+			
+			if( cli.hasOption("v")){
+				nlrParser.writeStdOut();
+			}
+			
+			if(cli.hasOption("c")){
+				nlrParser.writeBackup(new File(cli.getArg("c")));
+			}
 			
 			
 			
 			
 			
+			if(cli.hasOption("b")){
+				
+				File outputFile = new File(cli.getArg("b"));
+				if( outputFile.exists()){
+					outputFile.renameTo(new File(outputFile.getParentFile(), outputFile.getName()+".bak"));
+					outputFile = new File(cli.getArg("b"));
+					
+					
+					File intermediateFile = new File(outputFile.getAbsolutePath());
+					while(intermediateFile.exists()){
+						intermediateFile = new File(intermediateFile.getAbsolutePath() + ".bak");
+					}
+					if(outputFile.exists()){
+						outputFile.renameTo(intermediateFile);
+						System.err.println("WARNING: Output file exists. The existing file was renamed to "+intermediateFile.getName());
+					}
+					
+					outputFile = new File(cli.getArg("b"));
+				
+			}
+				nlrParser.writeBED(outputFile);
+			}
 			
 			
-		} catch (ParseException   e) {
+			
+			
+			
+		
+		
+		
+		
+			
+		
+			
+			
+		}catch(CLIParseException e){
 			e.printStackTrace();
 			
-			HelpFormatter formatter = new HelpFormatter();
-	        formatter.printHelp( "SequenceTools", options );
+			System.err.println(helpString);
+			
+			
 			
 		}
-		
-		catch (IOException   e) {
+		catch(IOException e){
 			e.printStackTrace();
-		}
-		
-		catch (ExecutionException   e) {
-			e.printStackTrace();
-		}
-		
-		catch (InterruptedException   e) {
-			e.printStackTrace();
+			System.err.println(helpString);
 		}
 		catch(ParserConfigurationException e){
 			e.printStackTrace();
 		}
-		catch (SAXException e){
+		catch(TransformerException e){
 			e.printStackTrace();
 		}
-		catch(TransformerException e){
-			
+		catch(InterruptedException e){
+			e.printStackTrace();
 		}
+		catch(ExecutionException e){
+			e.printStackTrace();
+		}
+		catch(SAXException e){
+			e.printStackTrace();
+		}
+		
 	}
+	
+	
 	
 	
 	
