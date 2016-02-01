@@ -724,7 +724,7 @@ public class MutantHunter {
 				}
 			}
 			
-			int minNumberOfZeroCoveragePositions = 50;
+			int minNumberOfZeroCoveragePositions = 100;
 			if( cli.hasOption("z")){
 				try{
 					minNumberOfZeroCoveragePositions = Integer.parseInt(cli.getArg("z"));
@@ -762,7 +762,7 @@ public class MutantHunter {
 					   "-n <int>\t\t\tMinimum number of mutants to report a contig. Default is 2\n"+
 					   "-c <int>\t\t\tMininum coverage for mappings to be regarded. Default is 10\n"+
 					   "-a <float>\t\t\tMaximum reference allele frequency to consider a SNP. Default is 0.1\n"+
-					   "-z <int>\t\t\tNumber of coherent positions with zero coverage to call a deletion mutant. Default is 50\n";
+					   "-z <int>\t\t\tNumber of coherent positions with zero coverage to call a deletion mutant. Default is 100\n";
 			
 			System.err.println(s);
 			

@@ -8,12 +8,13 @@ RenSeq is performed individually on each mutant and the wildtype. A denovo assem
 
 
 ## Prerequisites
-### MEME suite
+### MEME suite version 4.9.1
 The MEME suite is available at [http://meme.nbcr.net/meme/](http://meme.nbcr.net/meme/)
+
+Please note that the most actual version of meme is not compatible with NLR Parser. Use meme 4.9.1.
 
 Don't worry about setting up the Apache webserver. You just need MAST, so the quick install is sufficient. 
 
-This is for the NLR parser
 
 ### JRE 1.6
 Make sure you have the Java Runtime Environments 1.6 or higher. Download from [http://java.com](http://java.com)
@@ -65,6 +66,7 @@ samtools mpileup -f assembly.fasta -BQ0 rmdup.bam > pileup.txt
 
 ### Annotation of denovo assembly
 Use the NLR-Parser version2 to generate an xml file with the motif annotations. Download the NLR-Parser.jar from MutantHunter release.
+The meme.xml is [here](https://github.com/steuernb/MutantHunter/)
 
 ```
 java -jar NLR-Parser.jar -x meme.xml -y /path/to/meme/bin/mast -i assembly.fasta -c assembly.mast.xml
@@ -72,6 +74,9 @@ java -jar NLR-Parser.jar -x meme.xml -y /path/to/meme/bin/mast -i assembly.fasta
 ```
 
 ### Define on-target regions in your assembly
+
+Use a set of NLR sequences, e.g. the bait sequences to annotate those regions on contigs that are associated with NLRs. The bait library can be found here: [Triticea_RenSeq_Baits_V1.fasta](https://github.com/steuernb/MutantHunter/)
+
 
 ```
 makeblastdb -in baits.fasta -dbtype nucl
